@@ -41,8 +41,32 @@
     }
 
     h1 { margin: 0; font-size: clamp(2.2rem, 11vw, 4.5rem); line-height: 1.1; }
-    .hb { font-size: 1.2rem; opacity: .8; margin: 0; }
-    .hint { opacity: .6; font-size: 1rem; margin: 0; }
+    .title { font-size: clamp(3rem, 17vw, 6rem); line-height: 1.05; animation: pop 3s ease-in-out infinite; }
+    .shine {
+      background: linear-gradient(90deg, #fff, #ffd166, #ff5fa2, #7bdff2, #fff);
+      background-size: 300% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: shimmer 4s linear infinite;
+      filter: drop-shadow(0 0 12px rgba(255, 150, 200, .5));
+    }
+    .title { text-shadow: 0 0 25px rgba(255, 255, 255, .35); }
+    .first { position: relative; }
+    .swipe {
+      position: absolute; left: 0; right: 0;
+      bottom: calc(6.5rem + env(safe-area-inset-bottom));
+      margin: 0; opacity: .75; font-size: 1.1rem;
+      animation: nudge 1.6s ease-in-out infinite;
+    }
+    @keyframes shimmer { to { background-position: -300% 0; } }
+    @keyframes pop { 50% { transform: scale(1.04) rotate(-1deg); } }
+    @keyframes nudge { 50% { transform: translateX(10px); } }
+    #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .slides, nav { position: relative; z-index: 1; }
+    nav { position: fixed; }
+    @media (prefers-reduced-motion: reduce) {
+      .title, .shine, .swipe { animation: none; }
+    }
 
     .card {
       background: #fff;
@@ -92,11 +116,15 @@
   </style>
 </head>
 <body>
+  <canvas id="fx"></canvas>
   <main class="slides" id="slides">
+    <section class="slide first">
+      <h1 class="title">Happy<br>Birthday,<br><span class="shine">Hannah!</span></h1>
+      <p class="swipe">Swipe <b>→</b></p>
+    </section>
+
     <section class="slide">
-      <p class="hb">Happy Birthday, Hannah! 🎂</p>
-      <h1>Pick one</h1>
-      <p class="hint">Swipe or tap the arrow →</p>
+      <h1 class="shine">Pick one</h1>
     </section>
 
     <section class="slide">
@@ -152,6 +180,49 @@
       if (e.key === 'ArrowLeft') go(current() - 1);
     });
     update();
+
+    // Confetti + twinkling sparkles
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const cv = document.getElementById('fx'), ctx = cv.getContext('2d');
+      const colors = ['#ff5fa2', '#ffd166', '#7bdff2', '#b388ff', '#ffffff', '#ff8a5c'];
+      let W, H, dpr;
+      const fit = () => { dpr = devicePixelRatio || 1; W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr; };
+      fit(); addEventListener('resize', fit);
+      const rnd = (a, b) => a + Math.random() * (b - a);
+      const conf = [], stars = [];
+      const piece = (x, y, burst) => ({
+        x, y, w: rnd(6, 11) * dpr, h: rnd(10, 18) * dpr, c: colors[Math.random() * colors.length | 0],
+        vx: burst ? rnd(-6, 6) * dpr : rnd(-.6, .6) * dpr, vy: burst ? rnd(-12, -3) * dpr : rnd(1, 2.5) * dpr,
+        r: rnd(0, 6.3), vr: rnd(-.15, .15)
+      });
+      for (let i = 0; i < 45; i++) conf.push(piece(rnd(0, W), rnd(-H, H), false));
+      for (let i = 0; i < 28; i++) stars.push({ x: rnd(0, W), y: rnd(0, H), s: rnd(5, 14) * dpr, p: rnd(0, 6.3), v: rnd(.02, .06) });
+      const burst = (x, y) => { for (let i = 0; i < 50; i++) conf.push(piece(x * dpr, y * dpr, true)); };
+      burst(innerWidth / 2, innerHeight / 2);
+      addEventListener('pointerdown', e => burst(e.clientX, e.clientY));
+
+      const star = (x, y, s) => {
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, r = i % 2 ? s * .2 : s; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
+        ctx.closePath(); ctx.fill();
+      };
+      (function frame() {
+        ctx.clearRect(0, 0, W, H);
+        for (const t of stars) {
+          t.p += t.v; ctx.globalAlpha = Math.max(0, Math.sin(t.p)) * .9; ctx.fillStyle = '#fff'; star(t.x, t.y, t.s);
+        }
+        ctx.globalAlpha = 1;
+        for (let i = conf.length - 1; i >= 0; i--) {
+          const c = conf[i];
+          c.x += c.vx; c.y += c.vy; c.r += c.vr;
+          if (c.vy < 2.5 * dpr) c.vy += .25 * dpr; // gravity settles into slow fall
+          c.vx *= .99;
+          if (c.y > H + 30) { if (i >= 45 || conf.length > 45 + 200) { conf.splice(i, 1); continue; } c.y = -20; c.x = rnd(0, W); c.vy = rnd(1, 2.5) * dpr; }
+          ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.r); ctx.fillStyle = c.c; ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); ctx.restore();
+        }
+        requestAnimationFrame(frame);
+      })();
+    }
   </script>
 </body>
 </html>
