@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#16101c">
   <title>Happy Birthday, Hannah!</title>
   <meta name="description" content="A little birthday surprise for Hannah 🎂">
+  <meta name="robots" content="noindex, nofollow">
 
   <!-- Link preview (WhatsApp, iMessage, etc.) -->
   <meta property="og:type" content="website">
@@ -62,7 +63,12 @@
       filter: drop-shadow(0 0 12px rgba(255, 150, 200, .5));
     }
     .title { text-shadow: 0 0 25px rgba(255, 255, 255, .35); }
-    .first { position: relative; }
+    .first, .last { position: relative; }
+    .credit {
+      position: absolute; left: 0; right: 0;
+      bottom: calc(5.2rem + env(safe-area-inset-bottom));
+      margin: 0; font-size: .75rem; opacity: .45;
+    }
     .swipe {
       position: absolute; left: 0; right: 0;
       bottom: calc(6.5rem + env(safe-area-inset-bottom));
@@ -151,9 +157,10 @@
       <div class="card"><img src="img/korn.jpg" alt="Korn shirt"></div>
     </section>
 
-    <section class="slide">
+    <section class="slide last">
       <h1>or something else you like</h1>
       <div class="card logo"><img src="img/emp-logo.png" alt="EMP logo"></div>
+      <p class="credit">Images © EMP &amp; respective owners</p>
     </section>
   </main>
 
